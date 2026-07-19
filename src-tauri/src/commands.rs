@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::db::{self, SessionPreset};
 use crate::process;
 use crate::session;
 
@@ -47,4 +48,40 @@ pub fn get_session_state() -> session::SessionState {
 #[tauri::command]
 pub fn check_stale_hosts() -> Result<bool, String> {
     session::cleanup_on_startup()
+}
+
+#[tauri::command]
+pub fn save_session(
+    name: String,
+    blocked_apps: Vec<String>,
+    blocked_websites: Vec<String>,
+    duration_secs: u64,
+) -> Result<i64, String> {
+    db::save_session(&name, &blocked_apps, &blocked_websites, duration_secs)
+}
+
+#[tauri::command]
+pub fn list_sessions() -> Result<Vec<SessionPreset>, String> {
+    db::list_sessions()
+}
+
+#[tauri::command]
+pub fn get_session(id: i64) -> Result<SessionPreset, String> {
+    db::get_session(id)
+}
+
+#[tauri::command]
+pub fn delete_session(id: i64) -> Result<(), String> {
+    db::delete_session(id)
+}
+
+#[tauri::command]
+pub fn update_session(
+    id: i64,
+    name: String,
+    blocked_apps: Vec<String>,
+    blocked_websites: Vec<String>,
+    duration_secs: u64,
+) -> Result<(), String> {
+    db::update_session(id, &name, &blocked_apps, &blocked_websites, duration_secs)
 }

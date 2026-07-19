@@ -1,4 +1,5 @@
 mod commands;
+mod db;
 mod hosts;
 mod process;
 mod session;
@@ -15,6 +16,7 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             session::init(handle.clone());
+            db::init(&handle);
 
             // Check for stale hosts entries from a crashed session
             if let Ok(cleaned) = session::cleanup_on_startup() {
@@ -44,6 +46,11 @@ pub fn run() {
             commands::stop_session,
             commands::get_session_state,
             commands::check_stale_hosts,
+            commands::save_session,
+            commands::list_sessions,
+            commands::get_session,
+            commands::delete_session,
+            commands::update_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

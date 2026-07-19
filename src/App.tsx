@@ -1,27 +1,31 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { Crosshair, Play, ArrowsClockwise, Check, AppWindow, Globe } from "@phosphor-icons/react";
+import { Play, Check, AppWindow, Globe, ArrowLeft, Bookmarks } from "@phosphor-icons/react";
 import { DurationPicker } from "./components/DurationPicker";
 import { BlockedApps } from "./components/BlockedApps";
 import { BlockedWebsites } from "./components/BlockedWebsites";
 import { SessionView } from "./components/SessionView";
-import type { SessionState } from "./types";
+import { SessionsList } from "./components/SessionsList";
+import type { SessionState, SessionPreset } from "./types";
 
-type View = "setup" | "session" | "complete";
+type View = "list" | "setup" | "session" | "complete";
 type Tab = "apps" | "websites";
 
 function App() {
-  const [view, setView] = useState<View>("setup");
+  const [view, setView] = useState<View>("list");
   const [activeTab, setActiveTab] = useState<Tab>("apps");
   const [, setSessionState] = useState<SessionState | null>(null);
+  const [currentPreset, setCurrentPreset] = useState<SessionPreset | null>(null);
   const [blockedApps, setBlockedApps] = useState<string[]>([]);
   const [blockedWebsites, setBlockedWebsites] = useState<string[]>([]);
   const [durationSecs, setDurationSecs] = useState(25 * 60);
   const [remaining, setRemaining] = useState(0);
   const [staleCleaned, setStaleCleaned] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
   const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refreshState = useCallback(async () => {
     try {
@@ -49,7 +53,7 @@ function App() {
       setView("complete");
       setRemaining(0);
       completeTimerRef.current = setTimeout(() => {
-        setView("setup");
+        setView("list");
       }, 4000);
     });
 
@@ -70,6 +74,30 @@ function App() {
       if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
     };
   }, [refreshState]);
+
+  // Autosave (debounced) when editing a preset
+  useEffect(() => {
+    if (!currentPreset || view !== "setup") return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await invoke("update_session", {
+          id: currentPreset.id,
+          name: currentPreset.name,
+          blockedApps,
+          blockedWebsites,
+          durationSecs,
+        });
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 1200);
+      } catch (e) {
+        console.error("Autosave failed:", e);
+      }
+    }, 800);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [currentPreset, blockedApps, blockedWebsites, durationSecs, view]);
 
   const handleStart = async () => {
     setError(null);
@@ -94,8 +122,33 @@ function App() {
     }
   };
 
+  const openSession = (preset: SessionPreset) => {
+    setCurrentPreset(preset);
+    setBlockedApps(preset.blocked_apps);
+    setBlockedWebsites(preset.blocked_websites);
+    setDurationSecs(preset.duration_secs);
+    setView("setup");
+  };
+
+  const backToList = () => {
+    // flush any pending save
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (currentPreset) {
+      invoke("update_session", {
+        id: currentPreset.id,
+        name: currentPreset.name,
+        blockedApps,
+        blockedWebsites,
+        durationSecs,
+      }).catch((e) => console.error("Flush save failed:", e));
+    }
+    setView("list");
+  };
+
+  const hasItems = blockedApps.length > 0 || blockedWebsites.length > 0;
+
   return (
-    <div className="max-w-[440px] mx-auto px-5 pt-10 pb-12 min-h-screen">
+    <div className="max-w-[440px] mx-auto px-5 pb-12 min-h-screen">
       {staleCleaned && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium z-1000 max-w-[380px] text-center bg-accent/90 text-white [animation:toast-slide_240ms_cubic-bezier(0.4,0,0.2,1)] backdrop-blur-xl">
           Cleaned up stale hosts entries from a previous session.
@@ -111,16 +164,37 @@ function App() {
         </div>
       )}
 
-      {view === "setup" && (
+      {view === "list" && <SessionsList onOpenSession={openSession} />}
+
+      {view === "setup" && currentPreset && (
         <div>
-          <header className="text-center mb-9">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent text-white mb-3.5 shadow-lg shadow-accent/30">
-              <Crosshair size={28} weight="bold" />
+          <header className="sticky top-0 z-10 -mx-5 px-5 pt-4 pb-3 mb-6 bg-canvas flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                className="p-1.5 -ml-1.5 text-ink-muted hover:text-ink rounded-lg cursor-pointer border-0 bg-transparent hover:bg-input transition-colors duration-150 shrink-0"
+                onClick={backToList}
+                aria-label="Back to sessions"
+              >
+                <ArrowLeft size={20} weight="regular" />
+              </button>
+              <h1 className="text-[20px] font-bold tracking-[-0.018em] text-ink leading-none truncate">
+                {currentPreset.name}
+              </h1>
+              {savedFlash && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-success font-medium shrink-0">
+                  <Check size={12} weight="bold" />
+                  Saved
+                </span>
+              )}
             </div>
-            <h1 className="text-[28px] font-bold tracking-[-0.022em] text-ink">Focus</h1>
-            <p className="text-[15px] text-ink-muted mt-1.5 tracking-[-0.005em]">
-              Block distractions. Get things done.
-            </p>
+            <button
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-accent text-white text-sm font-semibold border-0 cursor-pointer transition-colors duration-150 hover:bg-accent-hover active:bg-accent-pressed disabled:bg-input disabled:text-ink-faint disabled:cursor-default shrink-0"
+              onClick={handleStart}
+              disabled={!hasItems}
+            >
+              <Play size={15} weight="fill" />
+              Start
+            </button>
           </header>
 
           <DurationPicker value={durationSecs} onChange={setDurationSecs} />
@@ -157,15 +231,6 @@ function App() {
           {activeTab === "websites" && (
             <BlockedWebsites websites={blockedWebsites} onChange={setBlockedWebsites} />
           )}
-
-          <button
-            className="inline-flex items-center justify-center gap-1.5 w-full px-5 py-3 rounded-xl bg-accent text-white text-lg font-semibold tracking-[-0.01em] border-0 cursor-pointer transition-colors duration-150 hover:bg-accent-hover active:bg-accent-pressed disabled:bg-input disabled:text-ink-faint disabled:cursor-default"
-            onClick={handleStart}
-            disabled={blockedApps.length === 0 && blockedWebsites.length === 0}
-          >
-            <Play size={18} weight="fill" />
-            Start Session
-          </button>
         </div>
       )}
 
@@ -190,11 +255,11 @@ function App() {
             className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-surface text-accent text-[15px] font-medium border-0 cursor-pointer hover:bg-hover transition-colors duration-150"
             onClick={() => {
               if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
-              setView("setup");
+              setView("list");
             }}
           >
-            <ArrowsClockwise size={16} weight="regular" />
-            New Session
+            <Bookmarks size={16} weight="regular" />
+            Back to Sessions
           </button>
         </div>
       )}

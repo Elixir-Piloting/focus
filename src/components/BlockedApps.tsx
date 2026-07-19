@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { AppWindow, FolderOpen, X } from "@phosphor-icons/react";
+import { AppWindow, FolderOpen, Plus, X } from "@phosphor-icons/react";
 
 interface Props {
   apps: string[];
@@ -60,13 +60,23 @@ export function BlockedApps({ apps, onChange }: Props) {
           onKeyDown={(e) => e.key === "Enter" && addManual()}
           className="flex-1 border-0 outline-none bg-input rounded-lg px-3 py-2 text-[15px] text-ink placeholder:text-ink-faint focus:bg-surface focus:ring-2 focus:ring-accent"
         />
-        <button
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-accent text-sm font-medium rounded-lg border-0 cursor-pointer hover:bg-input transition-colors duration-150 whitespace-nowrap"
-          onClick={pickFile}
-        >
-          <FolderOpen size={15} weight="regular" />
-          Browse
-        </button>
+        {manualInput.trim() ? (
+          <button
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-accent text-sm font-medium rounded-lg border-0 cursor-pointer hover:bg-input transition-colors duration-150 whitespace-nowrap"
+            onClick={addManual}
+          >
+            <Plus size={15} weight="bold" />
+            Add
+          </button>
+        ) : (
+          <button
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-accent text-sm font-medium rounded-lg border-0 cursor-pointer hover:bg-input transition-colors duration-150 whitespace-nowrap"
+            onClick={pickFile}
+          >
+            <FolderOpen size={15} weight="regular" />
+            Browse
+          </button>
+        )}
       </div>
 
       {/* List below — grows without pushing input */}

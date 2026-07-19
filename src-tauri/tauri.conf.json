@@ -13,8 +13,12 @@
     "windows": [
       {
         "title": "Focus",
-        "width": 520,
-        "height": 640,
+        "width": 500,
+        "height": 700,
+        "minWidth": 500,
+        "minHeight": 500,
+        "maxWidth": 500,
+        "maxHeight": 900,
         "resizable": true,
         "decorations": true
       }
