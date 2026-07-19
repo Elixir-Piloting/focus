@@ -26,6 +26,11 @@ function App() {
   const [savedFlash, setSavedFlash] = useState(false);
   const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentPresetRef = useRef<SessionPreset | null>(null);
+
+  useEffect(() => {
+    currentPresetRef.current = currentPreset;
+  }, [currentPreset]);
 
   const refreshState = useCallback(async () => {
     try {
@@ -53,7 +58,7 @@ function App() {
       setView("complete");
       setRemaining(0);
       completeTimerRef.current = setTimeout(() => {
-        setView("list");
+        setView(currentPresetRef.current ? "setup" : "list");
       }, 4000);
     });
 
@@ -255,11 +260,11 @@ function App() {
             className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-surface text-accent text-[15px] font-medium border-0 cursor-pointer hover:bg-hover transition-colors duration-150"
             onClick={() => {
               if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
-              setView("list");
+              setView(currentPreset ? "setup" : "list");
             }}
           >
             <Bookmarks size={16} weight="regular" />
-            Back to Sessions
+            Back to Session
           </button>
         </div>
       )}

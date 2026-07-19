@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Plus, Clock, Trash, Play } from "@phosphor-icons/react";
+import { Plus, Clock, Trash, CaretRight } from "@phosphor-icons/react";
 import { NameModal } from "./NameModal";
 import type { SessionPreset } from "../types";
 
@@ -142,7 +142,7 @@ export function SessionsList({ onOpenSession }: Props) {
                   <Trash size={16} weight="regular" />
                 </button>
                 <div className="p-1.5 text-ink-faint">
-                  <Play size={14} weight="fill" />
+                  <CaretRight size={16} weight="bold" />
                 </div>
               </div>
             ))}
