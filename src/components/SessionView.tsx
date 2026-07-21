@@ -1,4 +1,5 @@
 import { Timer, Stop } from "@phosphor-icons/react";
+import { Button } from "./Button";
 
 interface Props {
   remaining: number;
@@ -56,7 +57,7 @@ export function SessionView({
       </p>
 
       {(blockedApps.length > 0 || blockedWebsites.length > 0) && (
-        <div className="bg-surface rounded-xl px-4 py-3.5 mb-7 text-left">
+        <div className="bg-surface rounded-xl px-4 py-3.5 mb-7 text-left shadow-inset-md">
           {blockedApps.length > 0 && (
             <div className="mb-1.5 last:mb-0">
               <span className="text-xs font-semibold text-ink-muted tracking-wide">Apps </span>
@@ -72,13 +73,13 @@ export function SessionView({
         </div>
       )}
 
-      <button
-        className="inline-flex items-center justify-center gap-1.5 w-full px-5 py-3 rounded-xl bg-transparent text-danger text-lg font-semibold tracking-[-0.01em] border border-danger cursor-pointer hover:bg-danger hover:text-white transition-colors duration-150"
+      <Button
+        variant="outline-danger" size="lg" className="w-full px-5 py-3 text-lg"
         onClick={onStop}
       >
         <Stop size={16} weight="fill" />
         End Session
-      </button>
+      </Button>
     </div>
   );
 }

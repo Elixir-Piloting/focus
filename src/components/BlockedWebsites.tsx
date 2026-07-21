@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Globe, Plus, X } from "@phosphor-icons/react";
+import { Button } from "./Button";
+import { Input } from "./Input";
 
 interface Props {
   websites: string[];
@@ -29,21 +31,21 @@ export function BlockedWebsites({ websites, onChange }: Props) {
     <div className="mb-7">
       {/* Input at top — stays put */}
       <div className="flex gap-1.5 items-center">
-        <input
+        <Input
           type="text"
           placeholder="twitter.com"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addWebsite()}
-          className="flex-1 border-0 outline-none bg-input rounded-lg px-3 py-2 text-[15px] text-ink placeholder:text-ink-faint focus:bg-surface focus:ring-2 focus:ring-accent"
+          className="flex-1 py-2"
         />
-        <button
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-accent text-sm font-medium rounded-lg border-0 cursor-pointer hover:bg-input transition-colors duration-150 whitespace-nowrap"
+        <Button
+          variant="ghost-accent" size="md"
           onClick={addWebsite}
         >
           <Plus size={15} weight="bold" />
           Add
-        </button>
+        </Button>
       </div>
 
       {/* List below — grows without pushing input */}
@@ -52,12 +54,12 @@ export function BlockedWebsites({ websites, onChange }: Props) {
           {websites.map((site) => (
             <span
               key={site}
-              className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-input rounded-full text-[13px] font-medium text-ink whitespace-nowrap max-w-[220px] [animation:tag-in_200ms_cubic-bezier(0.4,0,0.2,1)]"
+              className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-input rounded-full text-[13px] font-medium text-ink whitespace-nowrap max-w-[220px] [animation:tag-in_200ms_cubic-bezier(0.4,0,0.2,1)] shadow-inset-sm"
             >
               <Globe size={12} weight="regular" className="text-ink-muted shrink-0" />
               <span className="overflow-hidden text-ellipsis">{site}</span>
               <button
-                className="inline-flex items-center justify-center w-4 h-4 border-0 bg-black/10 text-ink-muted rounded-full cursor-pointer shrink-0 transition-colors duration-100 hover:bg-danger hover:text-white"
+                className="inline-flex items-center justify-center w-4 h-4 border-0 bg-black/10 text-ink-muted rounded-full cursor-pointer shrink-0 transition-colors duration-100 hover:bg-danger hover:text-white shadow-inset-sm"
                 onClick={() => removeWebsite(site)}
                 aria-label={`Remove ${site}`}
               >

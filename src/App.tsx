@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Play, Check, AppWindow, Globe, ArrowLeft, Bookmarks } from "@phosphor-icons/react";
+import { Button } from "./components/Button";
 import { DurationPicker } from "./components/DurationPicker";
 import { BlockedApps } from "./components/BlockedApps";
 import { BlockedWebsites } from "./components/BlockedWebsites";
 import { SessionView } from "./components/SessionView";
 import { SessionsList } from "./components/SessionsList";
+import { ConfirmEndModal } from "./components/ConfirmEndModal";
+import { useEarlyStopCounter } from "./hooks/useEarlyStopCounter";
 import type { SessionState, SessionPreset } from "./types";
 
 type View = "list" | "setup" | "session" | "complete";
@@ -24,9 +27,12 @@ function App() {
   const [staleCleaned, setStaleCleaned] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [showConfirmEnd, setShowConfirmEnd] = useState(false);
+  const [confirmEndLevel, setConfirmEndLevel] = useState(1);
   const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentPresetRef = useRef<SessionPreset | null>(null);
+  const earlyStopCounter = useEarlyStopCounter();
 
   useEffect(() => {
     currentPresetRef.current = currentPreset;
@@ -55,6 +61,7 @@ function App() {
     });
 
     const unlistenEnd = listen("session-ended", () => {
+      setShowConfirmEnd(false);
       setView("complete");
       setRemaining(0);
       completeTimerRef.current = setTimeout(() => {
@@ -69,6 +76,7 @@ function App() {
     const unlistenStale = listen("stale-hosts-cleaned", () => {
       setStaleCleaned(true);
       setTimeout(() => setStaleCleaned(false), 5000);
+      earlyStopCounter.increment();
     });
 
     return () => {
@@ -106,6 +114,7 @@ function App() {
 
   const handleStart = async () => {
     setError(null);
+    setShowConfirmEnd(false);
     try {
       await invoke("start_session", {
         blockedApps,
@@ -119,12 +128,23 @@ function App() {
     }
   };
 
-  const handleStop = async () => {
+  const handleStopClick = () => {
+    setConfirmEndLevel(earlyStopCounter.levelForCount(earlyStopCounter.count));
+    setShowConfirmEnd(true);
+  };
+
+  const handleConfirmEnd = async () => {
+    earlyStopCounter.increment();
+    setShowConfirmEnd(false);
     try {
       await invoke("stop_session");
     } catch (e) {
       console.error("Failed to stop session:", e);
     }
+  };
+
+  const handleCancelEnd = () => {
+    setShowConfirmEnd(false);
   };
 
   const openSession = (preset: SessionPreset) => {
@@ -155,14 +175,14 @@ function App() {
   return (
     <div className="max-w-[440px] mx-auto px-5 pb-12 min-h-screen">
       {staleCleaned && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium z-1000 max-w-[380px] text-center bg-accent/90 text-white [animation:toast-slide_240ms_cubic-bezier(0.4,0,0.2,1)] backdrop-blur-xl">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium z-1000 max-w-[380px] text-center bg-accent/90 text-white [animation:toast-slide_240ms_cubic-bezier(0.4,0,0.2,1)] backdrop-blur-xl shadow-inset-md">
           Cleaned up stale hosts entries from a previous session.
         </div>
       )}
 
       {error && (
         <div
-          className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium z-1000 max-w-[380px] text-center bg-danger/90 text-white cursor-pointer [animation:toast-slide_240ms_cubic-bezier(0.4,0,0.2,1)] backdrop-blur-xl"
+          className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium z-1000 max-w-[380px] text-center bg-danger/90 text-white cursor-pointer [animation:toast-slide_240ms_cubic-bezier(0.4,0,0.2,1)] backdrop-blur-xl shadow-inset-md"
           onClick={() => setError(null)}
         >
           {error}
@@ -175,13 +195,13 @@ function App() {
         <div>
           <header className="sticky top-0 z-10 -mx-5 px-5 pt-4 pb-3 mb-6 bg-canvas flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <button
-                className="p-1.5 -ml-1.5 text-ink-muted hover:text-ink rounded-lg cursor-pointer border-0 bg-transparent hover:bg-input transition-colors duration-150 shrink-0"
+              <Button
+                variant="ghost" size="sm" className="-ml-1.5"
                 onClick={backToList}
                 aria-label="Back to sessions"
               >
                 <ArrowLeft size={20} weight="regular" />
-              </button>
+              </Button>
               <h1 className="text-[20px] font-bold tracking-[-0.018em] text-ink leading-none truncate">
                 {currentPreset.name}
               </h1>
@@ -192,23 +212,23 @@ function App() {
                 </span>
               )}
             </div>
-            <button
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-accent text-white text-sm font-semibold border-0 cursor-pointer transition-colors duration-150 hover:bg-accent-hover active:bg-accent-pressed disabled:bg-input disabled:text-ink-faint disabled:cursor-default shrink-0"
+            <Button
+              variant="primary" className="rounded-full px-4 py-2.5"
               onClick={handleStart}
               disabled={!hasItems}
             >
               <Play size={15} weight="fill" />
               Start
-            </button>
+            </Button>
           </header>
 
           <DurationPicker value={durationSecs} onChange={setDurationSecs} />
 
-          <div className="flex bg-black/5 dark:bg-white/10 rounded-full p-0.5 mb-5">
+          <div className="flex bg-black/5 dark:bg-white/10 rounded-full p-0.5 mb-5 shadow-inset-sm">
             <button
               className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border-0 cursor-pointer transition-all duration-200 ${
                 activeTab === "apps"
-                  ? "bg-black/12 dark:bg-white/12 text-ink"
+                  ? "bg-black/12 dark:bg-white/12 text-ink shadow-inset-sm"
                   : "bg-transparent text-ink-muted hover:text-ink"
               }`}
               onClick={() => setActiveTab("apps")}
@@ -219,7 +239,7 @@ function App() {
             <button
               className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border-0 cursor-pointer transition-all duration-200 ${
                 activeTab === "websites"
-                  ? "bg-black/12 dark:bg-white/12 text-ink"
+                  ? "bg-black/12 dark:bg-white/12 text-ink shadow-inset-sm"
                   : "bg-transparent text-ink-muted hover:text-ink"
               }`}
               onClick={() => setActiveTab("websites")}
@@ -245,7 +265,16 @@ function App() {
           duration={durationSecs}
           blockedApps={blockedApps}
           blockedWebsites={blockedWebsites}
-          onStop={handleStop}
+          onStop={handleStopClick}
+        />
+      )}
+
+      {view === "session" && (
+        <ConfirmEndModal
+          open={showConfirmEnd}
+          level={confirmEndLevel}
+          onConfirm={handleConfirmEnd}
+          onCancel={handleCancelEnd}
         />
       )}
 
@@ -256,8 +285,8 @@ function App() {
           </div>
           <h2 className="text-[22px] font-bold tracking-[-0.018em] mb-1.5 text-ink">Session Complete</h2>
           <p className="text-[15px] text-ink-muted mb-7">Great work staying focused.</p>
-          <button
-            className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-surface text-accent text-[15px] font-medium border-0 cursor-pointer hover:bg-hover transition-colors duration-150"
+          <Button
+            variant="surface" size="lg"
             onClick={() => {
               if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
               setView(currentPreset ? "setup" : "list");
@@ -265,7 +294,7 @@ function App() {
           >
             <Bookmarks size={16} weight="regular" />
             Back to Session
-          </button>
+          </Button>
         </div>
       )}
     </div>

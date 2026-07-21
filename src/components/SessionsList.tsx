@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Plus, Clock, Trash, CaretRight } from "@phosphor-icons/react";
+import { Button } from "./Button";
 import { NameModal } from "./NameModal";
 import type { SessionPreset } from "../types";
 
@@ -79,13 +80,13 @@ export function SessionsList({ onOpenSession }: Props) {
     <div className="flex flex-col min-h-screen">
       <header className="sticky top-0 z-10 -mx-5 px-5 pt-4 pb-3 bg-canvas flex items-center justify-between">
         <h1 className="text-[28px] font-bold tracking-[-0.022em] text-ink leading-none">Focus</h1>
-        <button
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white text-sm font-semibold rounded-full border-0 cursor-pointer transition-colors duration-150 hover:bg-accent-hover active:bg-accent-pressed"
+        <Button
+          variant="primary" className="rounded-full px-3.5 py-2"
           onClick={() => setModalOpen(true)}
         >
           <Plus size={15} weight="bold" />
           New
-        </button>
+        </Button>
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -109,7 +110,7 @@ export function SessionsList({ onOpenSession }: Props) {
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className="group bg-surface rounded-xl px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-hover transition-colors duration-150"
+                className="group bg-surface rounded-xl px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-hover transition-colors duration-150 shadow-inset-md"
                 onClick={() => onOpenSession(s)}
               >
                 <div className="flex-1 min-w-0">
@@ -132,7 +133,7 @@ export function SessionsList({ onOpenSession }: Props) {
                   </div>
                 </div>
                 <button
-                  className="p-1.5 text-ink-faint hover:text-danger rounded-lg cursor-pointer border-0 bg-transparent opacity-0 group-hover:opacity-100 transition-all duration-150"
+                  className="p-1.5 text-ink-faint hover:text-danger rounded-lg cursor-pointer border-0 bg-transparent opacity-0 group-hover:opacity-100 transition-all duration-150 shadow-inset-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete(s.id);

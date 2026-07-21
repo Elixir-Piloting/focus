@@ -32,6 +32,7 @@
 
   /* Separators */
   --color-separator: rgba(60, 60, 67, 0.12);
+
 }
 
 @media (prefers-color-scheme: dark) {
@@ -142,5 +143,27 @@ input[type="number"] {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+.shadow-inset-sm {
+  box-shadow: inset 0px 2px 3px rgba(0,0,0,0.20), inset 0px 6px 8px rgba(0,0,0,0.10);
+}
+.shadow-inset-md {
+  box-shadow: inset 0px 3px 4px rgba(0,0,0,0.20), inset 0px 8px 10px rgba(0,0,0,0.10);
+}
+.shadow-inset-lg {
+  box-shadow: inset 0px 3px 6px rgba(0,0,0,0.20), inset 0px 10px 14px rgba(0,0,0,0.10);
+}
+
+@media (prefers-color-scheme: dark) {
+  .shadow-inset-sm {
+    box-shadow: inset 0px 2px 3px rgba(255,255,255,0.08), inset 0px 6px 8px rgba(0,0,0,0.35);
+  }
+  .shadow-inset-md {
+    box-shadow: inset 0px 3px 4px rgba(255,255,255,0.08), inset 0px 8px 10px rgba(0,0,0,0.35);
+  }
+  .shadow-inset-lg {
+    box-shadow: inset 0px 3px 6px rgba(255,255,255,0.08), inset 0px 10px 14px rgba(0,0,0,0.35);
   }
 }

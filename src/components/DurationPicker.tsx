@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Input } from "./Input";
 
 const PRESETS = [
   { label: "25", mins: 25 },
@@ -30,13 +31,13 @@ export function DurationPicker({ value, onChange }: Props) {
 
   return (
     <div className="mb-7">
-      <div className="flex bg-black/5 dark:bg-white/10 rounded-full p-0.5">
+      <div className="flex bg-black/5 dark:bg-white/10 rounded-full p-0.5 shadow-inset-sm">
         {PRESETS.map((p) => (
           <button
             key={p.mins}
             className={`flex-1 px-3 py-1.5 rounded-full text-sm font-medium border-0 cursor-pointer transition-all duration-200 ${
               !customMode && value === p.mins * 60
-                ? "bg-black/12 dark:bg-white/12 text-ink"
+                ? "bg-black/12 dark:bg-white/12 text-ink shadow-inset-sm"
                 : "bg-transparent text-ink-muted hover:text-ink"
             }`}
             onClick={() => selectPreset(p.mins)}
@@ -47,7 +48,7 @@ export function DurationPicker({ value, onChange }: Props) {
         <button
           className={`flex-1 px-3 py-1.5 rounded-full text-sm font-medium border-0 cursor-pointer transition-all duration-200 ${
             customMode
-              ? "bg-black/12 dark:bg-white/12 text-ink"
+              ? "bg-black/12 dark:bg-white/12 text-ink shadow-inset-sm"
               : "bg-transparent text-ink-muted hover:text-ink"
           }`}
           onClick={() => setCustomMode(true)}
@@ -58,7 +59,7 @@ export function DurationPicker({ value, onChange }: Props) {
       <div className="h-[52px] mt-2.5 flex items-center justify-center">
         {customMode ? (
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="number"
               min={1}
               max={480}
@@ -66,7 +67,7 @@ export function DurationPicker({ value, onChange }: Props) {
               onChange={(e) => setCustomMins(Number(e.target.value))}
               onBlur={applyCustom}
               onKeyDown={(e) => e.key === "Enter" && applyCustom()}
-              className="w-[80px] text-center border-0 outline-none bg-input rounded-lg px-3 py-1.5 text-[20px] font-semibold text-ink focus:bg-surface focus:ring-2 focus:ring-accent"
+              className="w-[80px] text-center py-1.5 text-[20px] font-semibold"
             />
             <span className="text-[17px] text-ink-muted">minutes</span>
           </div>
